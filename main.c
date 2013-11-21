@@ -15,17 +15,104 @@
  */
 #include "ch.h"
 #include "hal.h"
-
 #include "chprintf.h"
 #include "usbcfg.h"
+#include "shell.h"
+#include "ansi.h"
+#include "status.h"
+
+#define SHELL_WA_SIZE   THD_WA_SIZE(2048)
+#define TEST_WA_SIZE    THD_WA_SIZE(256)
 
 /* Virtual serial port over USB.*/
 SerialUSBDriver SDU1;
+
+static void whoami0(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial USB\r\n");
+}
+static void whoami1(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial 1\r\n");
+}
+static void whoami2(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial 2\r\n");
+}
+static void whoami3(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial 3\r\n");
+}
+static void whoami4(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial 4\r\n");
+}
+static void whoami5(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial 5\r\n");
+}
+static void whoami6(BaseSequentialStream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  chprintf(chp, "You are on Serial 6\r\n");
+}
+
+static const ShellCommand commands0[] = {
+	{"whoami", whoami0},
+	{NULL, NULL}
+};
+static const ShellCommand commands1[] = {
+	{"whoami", whoami1},
+	{NULL, NULL}
+};
+static const ShellCommand commands2[] = {
+	{"whoami", whoami2},
+	{NULL, NULL}
+};
+static const ShellCommand commands3[] = {
+	{"whoami", whoami3},
+	{NULL, NULL}
+};
+static const ShellCommand commands4[] = {
+	{"whoami", whoami4},
+	{NULL, NULL}
+};
+static const ShellCommand commands5[] = {
+	{"whoami", whoami5},
+	{NULL, NULL}
+};
+static const ShellCommand commands6[] = {
+	{"whoami", whoami6},
+	{NULL, NULL}
+};
+
+
+static const ShellConfig shell_cfg0 = {(BaseSequentialStream *)&SDU1, commands0};
+static const ShellConfig shell_cfg1 = {(BaseSequentialStream *)&SD1, commands1};
+static const ShellConfig shell_cfg2 = {(BaseSequentialStream *)&SD2, commands2};
+static const ShellConfig shell_cfg3 = {(BaseSequentialStream *)&SD3, commands3};
+static const ShellConfig shell_cfg4 = {(BaseSequentialStream *)&SD4, commands4};
+static const ShellConfig shell_cfg5 = {(BaseSequentialStream *)&SD5, commands5};
+static const ShellConfig shell_cfg6 = {(BaseSequentialStream *)&SD6, commands6};
 
 /*
  * Application entry point.
  */
 int main(void) {
+	Thread *shelltp0 = NULL;
+	Thread *shelltp1 = NULL;
+	Thread *shelltp2 = NULL;
+	Thread *shelltp3 = NULL;
+	Thread *shelltp4 = NULL;
+	Thread *shelltp5 = NULL;
+	Thread *shelltp6 = NULL;
+
 	unsigned int i = 0;
 	/*
 	 * System initializations.
@@ -77,21 +164,32 @@ int main(void) {
 	usbStart(serusbcfg.usbp, &usbcfg);
 	usbConnectBus(serusbcfg.usbp);
 
+
+	shelltp1 = shellCreate(&shell_cfg1, SHELL_WA_SIZE, NORMALPRIO);
+	shelltp2 = shellCreate(&shell_cfg2, SHELL_WA_SIZE, NORMALPRIO);
+	shelltp3 = shellCreate(&shell_cfg3, SHELL_WA_SIZE, NORMALPRIO);
+	shelltp4 = shellCreate(&shell_cfg4, SHELL_WA_SIZE, NORMALPRIO);
+	shelltp5 = shellCreate(&shell_cfg5, SHELL_WA_SIZE, NORMALPRIO);
+	shelltp6 = shellCreate(&shell_cfg6, SHELL_WA_SIZE, NORMALPRIO);
 	/*
 	 * Normal main() thread activity, in this demo it just performs
 	 * a shell respawn upon its termination.
 	 */
 	while (TRUE) {
-		i++;
-		if (SDU1.config->usbp->state == USB_ACTIVE) {
-			chprintf((BaseSequentialStream *)&SDU1, "Serial USB: %d\r\n", i);
+		if (!shelltp0) {
+			if (SDU1.config->usbp->state == USB_ACTIVE) {
+				/* Spawns a new shell.*/
+				shelltp0 = shellCreate(&shell_cfg0, SHELL_WA_SIZE, NORMALPRIO);
+			}
 		}
-		chprintf((BaseSequentialStream *)&SD1, "Serial 1: %d\r\n", i);
-		chprintf((BaseSequentialStream *)&SD2, "Serial 2: %d\r\n", i);
-		chprintf((BaseSequentialStream *)&SD3, "Serial 3: %d\r\n", i);
-		chprintf((BaseSequentialStream *)&SD4, "Serial 4: %d\r\n", i);
-		chprintf((BaseSequentialStream *)&SD5, "Serial 5: %d\r\n", i);
-		chprintf((BaseSequentialStream *)&SD6, "Serial 6: %d\r\n", i);
+		else {
+			/* If the previous shell exited.*/
+			if (chThdTerminated(shelltp0)) {
+				/* Recovers memory of the previous shell.*/
+				chThdRelease(shelltp0);
+				shelltp0 = NULL;
+			}
+		}
 		chThdSleepMilliseconds(1000);
 	}
 }
