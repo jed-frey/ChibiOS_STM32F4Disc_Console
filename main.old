@@ -240,7 +240,7 @@ static void cmd_ascii6(BaseSequentialStream *chp, int argc, char *argv[]) {
       chThdTerminate(tp);
       chprintf(chp,".");
       chThdTerminate(tp2);
-      chprintf(chp,".");
+      chprintf(chp,".");re
       chThdTerminate(tp);
       chprintf(chp,".");
       chThdTerminate(tp2);

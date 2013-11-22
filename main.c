@@ -32,6 +32,11 @@ static const ShellCommand commands[] = {
 	{"threads",cmd_threads},
 	{"status",cmd_status},
 	{"ansiTest",cmd_ansiColorTest},
+	{"echo",cmd_echo},
+	{"getKey",cmd_getKey},
+	{"extended",cmd_ExtendedAscii},
+	{"box",cmd_box},
+	{"draw",cmd_draw},
 	{NULL,NULL}
 };
 
